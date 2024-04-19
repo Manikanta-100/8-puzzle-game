@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Puzzle Game</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #e992de;
+            text-align: center;
+            flex-direction: row;
+            padding-top: 2%;
+        }
+
+        h1 {
+            color: #0c0c0c;
+            align-items: center;
+            justify-content: center;
+
+        }
+
+        .input {
+            text-align: center;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f2f2f2;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .input p {
+            font-size: 18px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            font-size: 16px;
+            margin-top: 10px;
+            color: #555;
+        }
+
+        input[type="text"] {
+            width: 50%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+
+        .puzzle {
+            width: 500px;
+            height: 500px;
+            background: #ffdfea;
+            margin: 10px auto;
+            display: none;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+            z-index: 1;
+        }
+
+        .cell {
+            background: #906145;
+            width: 30%;
+            height: 150px;
+            border: 1px solid #028090;
+            margin-top: 10px;
+            text-align: center;
+            font-size: 2rem;
+            padding-top: 3rem;
+            cursor: pointer;
+        }
+
+        .empty {
+            background-color: #4569903d;
+            border: 2px solid #114B5F;
+        }
+
+        #message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            font-weight: bolder;
+            background-color: yellow;
+            color: rgb(0, 0, 0);
+            text-align: center;
+            padding: 10px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>8-puzzle Game</h1>
+    <div class="puzzle" id="puzzle"></div>
+    <div class="input" id="input">
+        <!-- <p>0,1,3,4,2,5,7,8,6</p> -->
+        <label for="initialState">Enter Initial State (comma-separated numbers):</label>
+        <input type="text" id="initialState" placeholder="1,2,3,4,5,6,7,8,0">
+        <button onclick="startGame()">Start Game</button>
+    </div>
+    <div id="message"></div>
+    <script>
+        let cells = document.querySelectorAll(".cell");
+        let msg = document.getElementById('message');
+        let input = document.getElementById('input');
+        let emptyCell = getEmptyCell();
+        let moves = 0;
+        const puzzle = document.getElementById("puzzle");
+        const initialStateInput = document.getElementById("initialState");
+
+        function startGame() {
+            const initialState = initialStateInput.value.split(',').map(Number);
+            if (isValidInitialState(initialState)) {
+                puzzle.style.display = 'flex';
+                initializePuzzle(initialState);
+                emptyCell = getEmptyCell();
+                input.style.display = 'none';
+                console.log("Empty cell: " + emptyCell.dataset.row, emptyCell.dataset.col);
+            }
+            else {
+                alert('Invalid initial state. Please enter nine comma-separated numbers.');
+            }
+        }
+
+        function initializePuzzle(state) {
+            puzzle.innerHTML = '';
+            let k = 0;
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 3; j++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    if (state[k] === 0) {
+                        k = k + 1;
+                        console.log("empty" + k);
+                        cell.classList.add('empty');
+                        emptyCell = cell;
+                        cell.textContent = '';
+                        cell.setAttribute('data-row', `${i}`);
+                        cell.setAttribute('data-col', `${j}`);
+                    }
+                    else {
+                        console.log("number" + k);
+                        cell.textContent = state[k];
+                        k = k + 1;
+                        cell.setAttribute('data-row', `${i}`);
+                        cell.setAttribute('data-col', `${j}`);
+                    }
+                    puzzle.appendChild(cell);
+                    cell.addEventListener('click', gameHandler);
+                }
+            }
+        }
+
+        function isValidInitialState(state) {
+            return (
+                Array.isArray(state) &&
+                state.length === 9 &&
+                state.every(num => Number.isInteger(num))
+            );
+        }
+
+        function getEmptyCell() {
+            return document.querySelector('.empty');
+        }
+
+        function gameHandler() {
+            if (isValidMove(this)) {
+                swap(this, emptyCell);
+                console.log("Updated Empty cell: " + emptyCell.dataset.row, emptyCell.dataset.col);
+            }
+        }
+
+        function isValidMove(clickedCell) {
+            console.log("clicled cell :" + clickedCell.dataset.row, clickedCell.dataset.col);
+            const clickedRow = parseInt(clickedCell.dataset.row);
+            const clickedCol = parseInt(clickedCell.dataset.col);
+            console.log("Empty cell :" + emptyCell.dataset.row, emptyCell.dataset.col);
+            const emptyRow = parseInt(emptyCell.dataset.row);
+            const emptyCol = parseInt(emptyCell.dataset.col);
+
+            const condition = (
+                (Math.abs(clickedRow - emptyRow) === 1 && clickedCol === emptyCol) ||
+                (Math.abs(clickedCol - emptyCol) === 1 && clickedRow === emptyRow)
+            );
+            return condition;
+        }
+
+        function swap(cell1, emptyC) {
+            // Swap the 'empty' class between the cells
+            cell1.classList.add('empty');
+            emptyC.classList.remove('empty');
+            emptyCell = getEmptyCell();
+
+            // Swap the content of the cells
+            const tempContent = cell1.textContent;
+            cell1.textContent = emptyC.textContent;
+            emptyC.textContent = tempContent;
+
+            //update Moves count
+            moves++;
+            console.log("no.of moves: " + moves);
+
+            if (isPuzzleSolved()) {
+                // alert("Congratulations! You solved the puzzle in " + moves + " moves.");
+                console.log("puzzle solved: " + isPuzzleSolved());
+                msg.innerHTML = "Congratulations! You solved the puzzle in " + moves + " moves."
+                msg.style.display = 'block';
+                const cells = document.querySelectorAll(".cell");
+                cells.forEach((cell) => {
+                    cell.removeEventListener('click', gameHandler);
+                });
+            }
+        }
+
+        function isPuzzleSolved() {
+            const cells = [...document.querySelectorAll(".cell")];
+            return cells.every((cell, index) => {
+                if (cell.textContent === "") {
+                    return index === 8;
+                }
+                return parseInt(cell.textContent) === index + 1;
+            });
+        }
+
+    </script>
+</body>
+
+</html>
